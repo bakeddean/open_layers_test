@@ -6,27 +6,19 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>OpenLayers Image Layer Example</title>
     <link rel="stylesheet" href="../openlayers/theme/default/style.css" type="text/css">
-    <link rel="stylesheet" href="style.css" type="text/css">
-    <style type="text/css">
-        p.caption {
-            width: 512px;
-        }
-    </style>
+    <link rel="stylesheet" href="deans_style.css" type="text/css">
+
     <script src="../openlayers/lib/OpenLayers.js"></script>
+    <script src="libs/jquery-1.11.1.js"></script>
     <script src="MauiScript.js"></script>
   </head>
   <body onload="init()">
     <h1 id="title">Imaui Editor</h1>
 
-    <div id="tags">
-        image, imagelayer
-    </div>
-
-    <p id="shortdesc">
-        Demonstrate a single non-tiled image as a selectable base layer.
-    </p>
-
     <div id="map" class="bigmap"></div>
-
+    <div id="info">
+        <h2 class="info-header">Vector Data</h2>
+        <textarea id="info-inner"></textarea>
+    </div>
   </body>
 </html>

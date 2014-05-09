@@ -1,0 +1,39 @@
+.bigmap {
+    width: 960px;
+    height: 854px;
+    border: 1px solid #ccc;
+    float: left;
+}
+
+#info{
+    border: 1px solid #ccc;
+    float: left;
+    height: 854px;
+    width: 400px;
+    margin-left: 10px;
+}
+
+.info-header{
+    background-color: lightblue;
+    padding: 0.5em;
+    margin: 0;
+}
+
+#info-inner{
+    width: 395px;
+    height: 800px;
+    font-size: 100%;
+    border: 1px solid #ccc;
+}
+
+#title{
+    background-color: rgb(173, 216, 230);
+    padding: 0.2em;
+    margin: 0.2em 0;
+    width: 1360px;
+    text-align: center;
+}
+
+body {
+    font-family: "Lucida Grande", Verdana, Geneva, Lucida, Arial, Helvetica, sans-serif;
+}
