@@ -138,6 +138,36 @@ function init(){
         textArea.append("----------------------------------&#13;&#10;");
     }
 
+    //-------------------------------------------------------------------------
+    // Feature added callback function. Append the vector co-ordinates to
+    // the text area.   
+    //-------------------------------------------------------------------------
+    function captureCircleDetails(poly){
+        var center = poly.geometry.getCentroid();
+        //var radius = Math.abs((poly.geometry.bounds.top - poly.geometry.bounds.bottom)/2);
+        var radius = Math.abs(poly.geometry.bounds.getWidth()/2);
+        var textArea = $('#info-inner');
+        var newLine = "&#13;&#10;";
+        
+        textArea.append("Center" + newLine);
+        textArea.append(center.x + "    ");
+        textArea.append(center.y + newLine);
+        textArea.append("Radius: " + radius + newLine);
+        textArea.append("----------------------------------" + newLine);
+    }
+
+    function haversine(){
+        var R = 6371; // km
+        var dLat = (lat2-lat1).toRad();
+        var dLon = (lon2-lon1).toRad(); 
+        var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1.toRad()) * Math.cos(lat2.toRad()) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2); 
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+        var d = R * c;
+        return d;
+    }
+
     /*var drawBoxControl = new OpenLayers.Control.DrawFeature(vector,
         OpenLayers.Handler.RegularPolygon, {
             handlerOptions: {
@@ -147,31 +177,50 @@ function init(){
             displayClass: 'olControlDrawFeaturePolygon'
     });*/
 
+    //-------------------------------------------------------------------------
+    // Set up controls to add to  the toolbar.
+    //-------------------------------------------------------------------------
+
+    // Polygon
     var drawBoxControl = new OpenLayers.Control.DrawFeature(vector,
         OpenLayers.Handler.Polygon, 
         {displayClass: 'olControlDrawFeaturePolygon'}
     );
 
+    // Circle
+    var drawCircleControl = new OpenLayers.Control.DrawFeature(vector,
+        OpenLayers.Handler.RegularPolygon,
+        {displayClass: 'olControlDrawFeaturePoint', handlerOptions: {sides: 30}}
+    );
+
+    var modifyControl = new OpenLayers.Control.ModifyFeature(vector, {
+            vertexRenderIntent: 'temporary',
+            displayClass: 'olControlModifyFeature'
+    });
+
+    // Navigation  control for the purpose of deselection
     var navControl = new OpenLayers.Control({
             displayClass: 'olControlNavigation'
     });
 
+    // Set the call backs
     drawBoxControl.featureAdded = captureLocationDetails;
+    drawCircleControl.featureAdded = captureCircleDetails;
 
-    toolbar.addControls([drawBoxControl, navControl]);
+    // Add all the controls to the toolbar
+    toolbar.addControls([drawBoxControl, drawCircleControl, modifyControl, navControl]);
 
     if(!map.getCenter()){
         map.zoomToMaxExtent();
     }
     
-
-    var point1 = new OpenLayers.Geometry.Point(170, -40);
+    // Temporary code to add a circle to the map
+    /*
+    var point1 = new OpenLayers.Geometry.Point(170, -38);
     var point2 = new OpenLayers.Geometry.Point(171, -41);
     var point3 = new OpenLayers.Geometry.Point(172, -40);
-    var linearRing = new OpenLayers.Geometry.MultiPoint([point1, point2, point3]);
-    //var geometry = new OpenLayers.Geometry.Polygon([linearRing]);
-    //var polygonFeature = new OpenLayers.Feature.Vector(geometry, null, null);
-    var polygonFeature = new OpenLayers.Feature.Vector(linearRing, null, null);
-    //var polygonFeature = new OpenLayers.Feature.Vector(geometry, null, siteStyle);
-    //vector.addFeatures([polygonFeature]);
+
+    var circle = OpenLayers.Geometry.Polygon.createRegularPolygon(point1, 1, 30);   // 1 = 1 degree (radius) so 2 degress circumference
+    var feature = new OpenLayers.Feature.Vector(circle);
+    vector.addFeatures([feature]);*/
 }

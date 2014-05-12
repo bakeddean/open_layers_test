@@ -19,6 +19,15 @@
     <div id="info">
         <h2 class="info-header">Vector Data</h2>
         <textarea id="info-inner"></textarea>
+        <h2 class="info-header">File</h2>
+
+        <form enctype="multipart/form-data" action="../../CGI-Executables/upload.php" method="POST">
+            <!-- MAX_FILE_SIZE must precede the file input field -->
+            <!--input type="hidden" name="MAX_FILE_SIZE" value="30000" /-->
+            <!-- Name of input element determines name in $_FILES array -->
+            Send this file: <input name="uploadedfile" type="file" size="35"/>
+            <input type="submit" value="Send File" />
+        </form>
     </div>
   </body>
 </html>
