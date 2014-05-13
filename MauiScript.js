@@ -2,10 +2,15 @@ var map;
 
 function init(){
 
+    var geographic = new OpenLayers.Projection("EPSG:4326");    
+    var mercator = new OpenLayers.Projection("EPSG:900913");
+
+    var currentFeature = null;
+
     //-------------------------------------------------------------------------
     // Create a vector layer for drawing.
     //-------------------------------------------------------------------------
-    var vector = new OpenLayers.Layer.Vector('Vector Layer', {
+    var vectorLayer = new OpenLayers.Layer.Vector('Vector Layer', {
         styleMap: new OpenLayers.StyleMap({
             temporary: OpenLayers.Util.applyDefaults({
                 pointRadius: 5,//16
@@ -54,6 +59,8 @@ function init(){
     //-------------------------------------------------------------------------
     map = new OpenLayers.Map({
         div: "map",
+        //projection: 'EPSG:900913',  // Google projection
+        //units: 'degrees',
         allOverlays: true,
         controls: [
             new OpenLayers.Control.TouchNavigation({
@@ -104,21 +111,39 @@ function init(){
     var wms = new OpenLayers.Layer.WMS(
         "Global Imagery",
         "http://vmap0.tiles.osgeo.org/wms/vmap0",
+        //"http://labs.metacarta.com/wms/vmap0",
         //{layers: "bluemarble"},
-        {layers: "basic"},  // Params
+        {layers: 'basic'},  // Params
         //{maxExtent: [-160, -88.759, 160, 88.759], numZoomLevels: 3}
         // Options
         {
             maxExtent: [165, -48, 179.5, -33.5],
-            numZoomLevels: 5
+            numZoomLevels: 10
         }
     );
     wms.opacity = 0.75;
 
+    //var geographic = new OpenLayers.Projection("EPSG:4326");
+
+    var osm_layer = new OpenLayers.Layer.OSM('OpenStreetMap Layer');
+
+    var wms_layer_labels = new OpenLayers.Layer.WMS(
+         'Location Labels',
+         'http://vmap0.tiles.osgeo.org/wms/vmap0',
+         {layers: 'ground_01',
+         transparent: true},
+         {visibility: true, opacity:0.5}
+       );
+
+    var google_map_layer = new OpenLayers.Layer.Google(
+         'Google Map Layer',
+         {}
+    );
+
     //-------------------------------------------------------------------------
     // Add the layers to the map and set the view.
     //-------------------------------------------------------------------------
-    map.addLayers([wms, graphic, vector]);
+    map.addLayers([osm_layer, graphic, vectorLayer]);
     map.addControl(new OpenLayers.Control.LayerSwitcher());
 
     //-------------------------------------------------------------------------
@@ -126,7 +151,6 @@ function init(){
     // the text area.   
     //-------------------------------------------------------------------------
     function captureLocationDetails(poly){
-        console.log("In capture location details");
         //var polyDetailsString = "Top:" + poly.geometry.bounds.top + " Right: " + poly.geometry.bounds.right + " Bottom: " + poly.geometry.bounds.bottom + " Left: " + poly.geometry.bounds.left;
         //console.log(polyDetailsString);
         var vertices = poly.geometry.getVertices();
@@ -142,18 +166,35 @@ function init(){
     // Feature added callback function. Append the vector co-ordinates to
     // the text area.   
     //-------------------------------------------------------------------------
-    function captureCircleDetails(poly){
-        var center = poly.geometry.getCentroid();
-        //var radius = Math.abs((poly.geometry.bounds.top - poly.geometry.bounds.bottom)/2);
-        var radius = Math.abs(poly.geometry.bounds.getWidth()/2);
+    function captureCircleDetails(featureVector){
+
+        // OSM/Google etc units are meters, so convert to degrees
+        var center = featureVector.geometry.getCentroid().transform(mercator, geographic);
+
+        // Radius is already in meters
+        var radius = Math.abs(featureVector.geometry.bounds.getWidth()/2);
+
+        // Get the radius in meters
+        /*var radiusMeters = OpenLayers.Util.distVincenty(
+            new OpenLayers.LonLat([center.x, center.y]),
+            new OpenLayers.LonLat([center.x, poly.geometry.bounds.top])
+        );
+        radiusMeters *= 1000;*/
+
+        //var centerLatLon = new OpenLayers.LonLat([center.x, center.y]);
+
         var textArea = $('#info-inner');
         var newLine = "&#13;&#10;";
         
         textArea.append("Center" + newLine);
         textArea.append(center.x + "    ");
         textArea.append(center.y + newLine);
-        textArea.append("Radius: " + radius + newLine);
+
+        //textArea.append("Radius: " + radiusMeters + newLine);
+        textArea.append("Radius: " + radius + " (m)" + newLine);
         textArea.append("----------------------------------" + newLine);
+
+        currentFeature = featureVector;
     }
 
     function haversine(){
@@ -182,18 +223,18 @@ function init(){
     //-------------------------------------------------------------------------
 
     // Polygon
-    var drawBoxControl = new OpenLayers.Control.DrawFeature(vector,
+    var drawBoxControl = new OpenLayers.Control.DrawFeature(vectorLayer,
         OpenLayers.Handler.Polygon, 
         {displayClass: 'olControlDrawFeaturePolygon'}
     );
 
     // Circle
-    var drawCircleControl = new OpenLayers.Control.DrawFeature(vector,
+    var drawCircleControl = new OpenLayers.Control.DrawFeature(vectorLayer,
         OpenLayers.Handler.RegularPolygon,
         {displayClass: 'olControlDrawFeaturePoint', handlerOptions: {sides: 30}}
     );
 
-    var modifyControl = new OpenLayers.Control.ModifyFeature(vector, {
+    var modifyControl = new OpenLayers.Control.ModifyFeature(vectorLayer, {
             vertexRenderIntent: 'temporary',
             displayClass: 'olControlModifyFeature'
     });
@@ -211,8 +252,48 @@ function init(){
     toolbar.addControls([drawBoxControl, drawCircleControl, modifyControl, navControl]);
 
     if(!map.getCenter()){
-        map.zoomToMaxExtent();
+        //map.zoomToMaxExtent();
+        //var mapCenter = new OpenLayers.Geometry.Point(-41, -174);
+
+        //var mapCenter = new OpenLayers.LonLat(174, -41);
+        var mapCenter = new OpenLayers.LonLat(174.7788705825716, -41.28755554304306);   // Frank Kitts park
+        //var jim = OpenLayers.Layer.SphericalMercator.forwardMercator(mapCenter);
+        //var bob = mapCenter.clone().transform(geographic, mercator);
+        map.setCenter(mapCenter.transform(geographic, mercator), 18);
+        //map.setCenter([19456298.101936, -5054855.1001368975], 18);
     }
+
+    //-------------------------------------------------------------------------
+    // Convert the Vector layer features into GeoJSON.
+    //-------------------------------------------------------------------------
+    function serializeFeatures(){
+    }
+    $('#feature-serialize').click(serializeFeatures);
+
+    //-------------------------------------------------------------------------
+    // Delete all the features on the map.
+    //-------------------------------------------------------------------------
+    function deleteAllFeatures(){
+        if(window.confirm("Delete all features?")){
+            vectorLayer.destroyFeatures();
+            $('#info-inner').html("");
+        }
+    }
+    $('#feature-delete-all').click(deleteAllFeatures);
+
+    //-------------------------------------------------------------------------
+    // Delete the current feature.
+    //-------------------------------------------------------------------------
+    function deleteCurrentFeature(){
+        //debugger;
+        if(window.confirm("Delete feature?")){
+            vectorLayer.destroyFeatures(currentFeature);
+
+            // Need to remove this from the side panel
+            //$('#info-inner').html("");
+        }
+    }
+    $('#feature-delete').click(deleteCurrentFeature);
     
     // Temporary code to add a circle to the map
     /*

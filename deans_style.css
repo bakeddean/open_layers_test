@@ -5,7 +5,7 @@
     float: left;
 }
 
-#info{
+#info-panel-outer{
     border: 1px solid #ccc;
     float: left;
     height: 854px;
@@ -21,7 +21,7 @@
 
 #info-inner{
     width: 395px;
-    height: 600px;
+    height: 400px;
     font-size: 100%;
     border: 1px solid #ccc;
 }
@@ -32,6 +32,10 @@
     margin: 0.2em 0;
     width: 1360px;
     text-align: center;
+}
+
+#current-feature-panel{
+   height: 150px; 
 }
 
 body {

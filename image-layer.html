@@ -10,17 +10,28 @@
 
     <script src="../openlayers/lib/OpenLayers.js"></script>
     <script src="libs/jquery-1.11.1.js"></script>
+    <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
     <script src="MauiScript.js"></script>
   </head>
   <body onload="init()">
     <h1 id="title">Imaui Editor</h1>
 
     <div id="map" class="bigmap"></div>
-    <div id="info">
-        <h2 class="info-header">Vector Data</h2>
-        <textarea id="info-inner"></textarea>
-        <h2 class="info-header">File</h2>
+    <div id="info-panel-outer">
 
+        <div id="feature-data-panel">
+            <h2 class="info-header">Feature Data</h2>
+            <textarea id="info-inner"></textarea>
+            <button type="button" id="feature-serialize">Serialize</button>
+            <button type="button" id="feature-delete-all">Delete All</button>
+        </div>
+
+        <div id="current-feature-panel">
+            <h2 class="info-header">Current Feature</h2>
+            <button type="button" id="feature-delete">Delete</button>
+        </div>
+
+        <h2 class="info-header">Project</h2>
         <form enctype="multipart/form-data" action="../../CGI-Executables/upload.php" method="POST">
             <!-- MAX_FILE_SIZE must precede the file input field -->
             <!--input type="hidden" name="MAX_FILE_SIZE" value="30000" /-->
