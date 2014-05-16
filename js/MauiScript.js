@@ -195,6 +195,29 @@ function init(){
         textArea.append("----------------------------------" + newLine);
 
         currentFeature = featureVector;
+
+        console.log(multipolygonToJSON(featureVector));
+    }
+
+    //-------------------------------------------------------------------------
+    // Convert a multipolygon to a GeoJSON string, with a custom type of
+    // CLCircularRegion for use with iOS.
+    //-------------------------------------------------------------------------
+    function multipolygonToJSON(featureVector){
+        // OSM/Google etc units are meters, so convert to degrees
+        var center = featureVector.geometry.getCentroid().transform(mercator, geographic);
+        var radius = Math.abs(featureVector.geometry.bounds.getWidth()/2);
+
+        //debugger;
+        var jsonString = '{"type":"Feature",';
+        jsonString += '"id":"' + featureVector.id + '",'
+        jsonString += '"properties":{},';
+        jsonString += '"geometry":';
+        jsonString += '{"type":"CLCircularRegion",';
+        jsonString += '"coordinates":[' + center.x + ',' + center.y + '],';
+        jsonString += '"radius":' + radius + '}';
+
+        return jsonString;
     }
 
     function haversine(){
@@ -267,8 +290,36 @@ function init(){
     // Convert the Vector layer features into GeoJSON.
     //-------------------------------------------------------------------------
     function serializeFeatures(){
+        // Iterate through vector layer getting multipolygons(?)
+        // create feature collection
+        // send to server 
     }
     $('#feature-serialize').click(serializeFeatures);
+
+    //-------------------------------------------------------------------------
+    // Test using async http request to get data.
+    //-------------------------------------------------------------------------
+    function loadXMLDoc(){
+        xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange=function(){
+            // Ready state 4 means the request is done
+            if (xmlhttp.readyState==4 && xmlhttp.status==200){
+                $('#info-inner').html(xmlhttp.responseText);
+            }
+        }
+        xmlhttp.open("GET","xmlhttp_info.txt",true);
+        xmlhttp.send();
+    }
+
+    //-------------------------------------------------------------------------
+    // Test using JQuery ajax to get data.
+    //-------------------------------------------------------------------------
+    function loadXMLDoc2(){
+        $.get('xmlhttp_info.txt', function(data) {
+            $('#info-inner').html(data);
+        });
+    }
+    $('#loadXMLDoc').click(loadXMLDoc2);
 
     //-------------------------------------------------------------------------
     // Delete all the features on the map.
@@ -285,7 +336,6 @@ function init(){
     // Delete the current feature.
     //-------------------------------------------------------------------------
     function deleteCurrentFeature(){
-        //debugger;
         if(window.confirm("Delete feature?")){
             vectorLayer.destroyFeatures(currentFeature);
 
