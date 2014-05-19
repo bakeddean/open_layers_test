@@ -156,8 +156,13 @@ function init(){
         var vertices = poly.geometry.getVertices();
         var textArea = $('#info-inner');
         for(var i = 0; i < vertices.length; i++){
-            textArea.append(vertices[i].x + "    ");
-            textArea.append(vertices[i].y + "&#13;&#10;");
+            var geoVertex = vertices[i].transform(mercator, geographic);
+            textArea.append(geoVertex.x + "    ");
+            textArea.append(geoVertex.y + "&#13;&#10;");
+
+
+            //textArea.append(vertices[i].x + "    ");
+            //textArea.append(vertices[i].y + "&#13;&#10;");
         }
         textArea.append("----------------------------------&#13;&#10;");
     }
