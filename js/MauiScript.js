@@ -10,7 +10,7 @@ function init(){
     //-------------------------------------------------------------------------
     // Create a vector layer for drawing.
     //-------------------------------------------------------------------------
-    var vectorLayer = new OpenLayers.Layer.Vector('Vector Layer', {
+    /*var vectorLayer = new OpenLayers.Layer.Vector('Vector Layer', {
         styleMap: new OpenLayers.StyleMap({
             temporary: OpenLayers.Util.applyDefaults({
                 pointRadius: 5,//16
@@ -23,8 +23,12 @@ function init(){
                 pointRadius: 16,
                 strokeWidth: 3
             }, OpenLayers.Feature.Vector.style.select)
-        })
-    });
+        })//,
+        //renderers: ['Canvas', 'VML']
+    });*/
+
+
+    var vectorLayer = new OpenLayers.Layer.Vector('Vector Layer', {});
 
     //-------------------------------------------------------------------------
     // OpenLayers' EditingToolbar internally creates a Navigation control, we
@@ -73,13 +77,17 @@ function init(){
         ]
     });
 
+    var pt1 = new OpenLayers.LonLat(165, -48).transform(geographic, mercator);
+    var pt2 = new OpenLayers.LonLat(179.5, -33.5).transform(geographic, mercator);
+
     var graphic = new OpenLayers.Layer.Image(
         'Maui Zone',
         'data/Mauimap.png',
         //new OpenLayers.Bounds(-180, -88.759, 180, 88.759),
         //new OpenLayers.Bounds(164, -48, 180, -34),  // Roughly taken from maui map
         //                     l    b    r    t
-        new OpenLayers.Bounds(165, -48, 179.5, -33.5),  // Roughly taken from maui map
+        //new OpenLayers.Bounds(165, -48, 179.5, -33.5),  // Roughly taken from maui map
+        new OpenLayers.Bounds(pt1.lon, pt1.lat, pt2.lon, pt2.lat),  // Roughly taken from maui map
         new OpenLayers.Size(480, 632),  // Map image dimensions
         {numZoomLevels: 5}
     );
@@ -156,7 +164,10 @@ function init(){
         var vertices = poly.geometry.getVertices();
         var textArea = $('#info-inner');
         for(var i = 0; i < vertices.length; i++){
-            var geoVertex = vertices[i].transform(mercator, geographic);
+
+            // Transform from map point to lat/lon
+            var geoVertex = vertices[i].clone();
+            geoVertex.transform(mercator, geographic);
             textArea.append(geoVertex.x + "    ");
             textArea.append(geoVertex.y + "&#13;&#10;");
 
@@ -213,7 +224,6 @@ function init(){
         var center = featureVector.geometry.getCentroid().transform(mercator, geographic);
         var radius = Math.abs(featureVector.geometry.bounds.getWidth()/2);
 
-        //debugger;
         var jsonString = '{"type":"Feature",';
         jsonString += '"id":"' + featureVector.id + '",'
         jsonString += '"properties":{},';
@@ -287,7 +297,7 @@ function init(){
         var mapCenter = new OpenLayers.LonLat(174.7788705825716, -41.28755554304306);   // Frank Kitts park
         //var jim = OpenLayers.Layer.SphericalMercator.forwardMercator(mapCenter);
         //var bob = mapCenter.clone().transform(geographic, mercator);
-        map.setCenter(mapCenter.transform(geographic, mercator), 18);
+        map.setCenter(mapCenter.transform(geographic, mercator), 15);   // 18
         //map.setCenter([19456298.101936, -5054855.1001368975], 18);
     }
 
@@ -295,9 +305,35 @@ function init(){
     // Convert the Vector layer features into GeoJSON.
     //-------------------------------------------------------------------------
     function serializeFeatures(){
-        // Iterate through vector layer getting multipolygons(?)
-        // create feature collection
-        // send to server 
+
+        // Create a new GeoJSON format and set up the projection transforms
+        var geojson_format = new OpenLayers.Format.GeoJSON();
+        geojson_format.externalProjection = geographic; 
+        geojson_format.internalProjection = mercator;
+        
+        // Serialize vector layers features (true == pretty)
+        var jsonString = geojson_format.write(vectorLayer.features, true);
+        //console.log(jsonString);
+
+        // Send to server
+        $.post("../../CGI-Executables/serialize_features.php",
+            {'data' : jsonString},
+            function(data) {
+                $('#info-inner').html(data);
+            }
+        );
+
+        /*
+        $.ajax({
+            //type: 'POST',
+            url: "../../CGI-Executables/serialize_features.php",
+            type: 'POST',
+            data: { 'data': jsonString},
+            //dataType: 'html',
+            success: function(data){
+                $('#info-inner').html(data);
+            }
+        });*/
     }
     $('#feature-serialize').click(serializeFeatures);
 
